@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XII MP 2 | Management Masters</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3c72;
+            --secondary: #ffc107;
+            --dark: #0f172a;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            --success: #10b981; /* IJO ANDALAN */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; overflow-x: hidden; }
+        
+        #fullPageLogin {
+            position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at top right, #2a5298, #1e3c72, #0f172a);
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);
+            padding: 40px; border-radius: 24px; width: 90%; max-width: 400px;
+            border: 1px solid rgba(255,255,255,0.2); text-align: center; color: white;
+        }
+        .login-input-group { position: relative; margin-bottom: 25px; text-align: left; }
+        .login-input-group input {
+            width: 100%; padding: 12px 0; background: transparent; border: none;
+            border-bottom: 2px solid rgba(255,255,255,0.3); color: white; outline: none;
+        }
+        .login-input-group label { position: absolute; left: 0; top: 12px; color: rgba(255,255,255,0.6); transition: 0.3s; pointer-events: none; }
+        .login-input-group input:focus ~ label, .login-input-group input:valid ~ label { top: -15px; font-size: 12px; color: var(--secondary); }
+        .toggle-password { position: absolute; right: 0; top: 15px; cursor: pointer; color: rgba(255,255,255,0.6); }
+
+        /* Tombol Simpan Floating Admin */
+        #adminSaveBtn {
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+            background: var(--success); color: white; border: none; padding: 15px 30px;
+            border-radius: 50px; font-weight: 800; cursor: pointer; display: none;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4); transition: var(--transition);
+        }
+        #adminSaveBtn:hover { transform: scale(1.1); background: #059669; }
+
+        .navbar {
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px);
+            padding: 8px 15px; border-radius: 50px; z-index: 999;
+            width: 95%; max-width: 700px; display: flex; justify-content: center; 
+            flex-wrap: wrap; gap: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .navbar a { 
+            color: #1e293b; text-decoration: none; font-weight: 700; font-size: 0.7rem; 
+            padding: 8px 12px; border-radius: 20px; transition: var(--transition);
+        }
+        .navbar a:hover { background: var(--primary); color: white; }
+
+        .hero {
+            height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: linear-gradient(rgba(15,23,42,0.6), rgba(15,23,42,0.6)), url('IMG-20251104-WA0050.jpg');
+            background-size: cover; background-position: center; color: white; text-align: center;
+            clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
+            padding: 0 20px;
+        }
+
+        #realTimeClock {
+            margin-top: 25px; font-size: 0.95rem; font-weight: 600; padding: 12px 25px;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+            border-radius: 50px; border: 1px solid rgba(255,255,255,0.2);
+            color: white; letter-spacing: 1px;
+        }
+
+        .section { padding: 80px 20px; max-width: 1200px; margin: 0 auto; }
+        .section-title { font-size: 2.2rem; text-align: center; margin-bottom: 50px; font-weight: 800; }
+        .section-title::after { content: ''; display: block; width: 60px; height: 5px; background: var(--secondary); margin: 15px auto; border-radius: 10px; }
+
+        .about-text { text-align: center; max-width: 850px; margin: 0 auto; color: #64748b; font-size: 1.1rem; line-height: 2.2; }
+
+        .stats-container {
+            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(30, 60, 114, 0.85)), url('IMG-20251218-WA0052.jpg');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            padding: 60px 20px; display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; color: white; text-align: center;
+        }
+        .stat-item { min-width: 120px; }
+        .stat-number { font-size: 3.5rem; font-weight: 800; display: block; color: var(--secondary); }
+        .stat-label { font-size: 0.8rem; letter-spacing: 2px; font-weight: 700; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        .card {
+            background: white; padding: 35px 25px; border-radius: 24px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; transition: var(--transition);
+        }
+        .card:hover { transform: translateY(-10px); border-color: var(--secondary); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+        .card img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid #f8fafc; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .card h4 { color: var(--primary); margin-bottom: 5px; font-size: 1.1rem; }
+        
+        /* WARNA HIJAU UNTUK JABATAN */
+        .card small, .thanks-card small { color: var(--success) !important; font-weight: 800; display: block; margin-bottom: 10px; text-transform: uppercase; font-size: 0.75rem; }
+
+        .card p { font-size: 0.85rem; color: #64748b; line-height: 1.6; }
+
+        .featured-card { 
+            grid-column: 1 / -1; max-width: 550px; margin: 0 auto 30px; 
+            border: 3px solid var(--secondary); background: #fffdf5; 
+            padding: 50px 40px; transform: scale(1.05);
+        }
+        .featured-card img { width: 130px; height: 130px; }
+
+        .special-thanks-container { background: #f1f5f9; padding: 80px 20px; text-align: center; }
+        .thanks-grid { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
+        .thanks-card { 
+            background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            max-width: 280px; width: 100%; transition: var(--transition); 
+        }
+        .thanks-card img { width: 100%; height: 320px; border-radius: 15px; object-fit: cover; margin-bottom: 15px; }
+
+        .pagination { display: flex; justify-content: center; gap: 8px; list-style: none; margin-top: 40px; flex-wrap: wrap; }
+        .pagination li { padding: 8px 16px; background: white; border-radius: 10px; cursor: pointer; font-weight: bold; border: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .pagination li.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-content { background: white; padding: 40px; border-radius: 30px; text-align: center; max-width: 400px; width: 90%; }
+        .btn-insta { background: linear-gradient(45deg, #f09433, #e6684a, #c8417c, #83439b); color: white; padding: 15px; border-radius: 15px; text-decoration: none; display: block; font-weight: 800; margin-top: 20px; }
+
+        .admin-editable { border: 1px dashed var(--secondary) !important; cursor: text; }
+        .img-editable { border: 3px dashed var(--secondary) !important; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="fullPageLogin">
+        <div class="login-box">
+            <h2 style="margin-bottom: 25px; font-weight: 800;">WEBSITE XII MP 2</h2>
+            <form id="loginForm">
+                <div class="login-input-group">
+                    <input type="text" id="loginUsername" required>
+                    <label>Username</label>
+                </div>
+                <div class="login-input-group">
+                    <input type="password" id="loginPassword" required>
+                    <label>Password</label>
+                    <i class="fas fa-eye toggle-password" id="togglePass"></i>
+                </div>
+                <button type="submit" style="width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--secondary); font-weight: 800; cursor: pointer;">MASUK</button>
+            </form>
+            <p id="loginError" style="margin-top: 15px; color: #ff8a8a; font-size: 0.9rem; font-weight: 600;"></p>
+        </div>
+    </div>
+
+    <button id="adminSaveBtn" onclick="manualSave()"><i class="fas fa-save"></i> SIMPAN PERUBAHAN</button>
+
+    <input type="file" id="imageUploader" style="display:none;" accept="image/*">
+
+    <div id="mainContent" style="display:none;">
+        <nav class="navbar">
+            <a href="#about">ABOUT</a>
+            <a href="#structure">STRUKTUR</a>
+            <a href="#members">ANGGOTA</a>
+            <a href="#schedule">JADWAL</a>
+            <a href="#gallery">GALERI</a>
+            <a href="#" onclick="openSosmed()">SOCIALS</a>
+            <a href="#" onclick="logout()" style="color: red;">LOGOUT</a>
+        </nav>
+
+        <header class="hero">
+            <p style="letter-spacing: 5px; text-transform: uppercase; font-weight: 600; margin-bottom: 10px;">Official Class Website</p>
+            <h1 id="heroTitle" class="edit-target">XII MP 2</h1>
+            <div id="realTimeClock">Loading...</div>
+        </header>
+
+        <section id="about" class="section">
+            <h3 class="section-title">TENTANG XII MP 2</h3>
+            <p class="about-text edit-target" id="aboutDesc">
+                Kelas XII MP 2 bukan sekadar ruang belajar, melainkan rumah kedua bagi kami, para calon profesional muda di bidang Manajemen Perkantoran. Tiga tahun perjalanan yang telah kita lalui bersama penuh dengan dinamika, tawa, dan tentu saja, tantangan. <br><br>
+                Sejak awal, semangat sinergi dan kolaborasi telah menjadi ciri khas kami. Dari belajar menyusun arsip dengan rapi, mengelola surat menyurat, hingga menguasai teknologi perkantoran modern, setiap hari adalah investasi untuk masa depan. Kami dikenal sebagai kelas yang serius dalam belajar, namun selalu punya waktu untuk tawa dan kekeluargaan. <br><br>
+               Di tahun terakhir ini, fokus kami semakin tajam. Kami tidak hanya berjuang untuk kelulusan, tetapi juga untuk membuktikan bahwa *Manajemen Perkantoran* adalah fondasi penting dalam dunia kerja. Kami adalah tim yang mampu *merencanakan (Plan), melaksanakan (Execute), dan mencapai (Succeed)* setiap target, baik di dalam kelas maupun di luar kegiatan sekolah.
+            </p>
+        </section>
+
+        <div class="stats-container">
+            <div class="stat-item"><span class="stat-number edit-target" id="stat-stud">36</span><span class="stat-label">STUDENTS</span></div>
+            <div class="stat-item"><span class="stat-number edit-target" id="stat-boy">5</span><span class="stat-label">BOYS</span></div>
+            <div class="stat-item"><span class="stat-number edit-target" id="stat-girl">31</span><span class="stat-label">GIRLS</span></div>
+        </div>
+
+        <section id="structure" class="section">
+            <h3 class="section-title">Struktur Organisasi</h3>
+            <div class="grid-container">
+                <div class="card featured-card">
+                    <img src="Screenshot_20251006_093145~2.jpg" id="img_wali">
+                    <h4 class="edit-target" id="name_wali">Bu Muiyah, S.Pd</h4>
+                    <small>Wali Kelas</small>
+                    <p class="edit-target" id="desc_wali">Sosok pembimbing yang penuh dedikasi dalam mengarahkan XII MP 2 menjadi kelas yang unggul.</p>
+                </div>
+                <div class="card"><img src="IMG_20260104_085039.jpg" id="img_ketua"><h4 class="edit-target" id="name_ketua">Muhammad Nur Jamil</h4><small>Ketua Kelas</small></div>
+                <div class="card"><img src="Screenshot_20251006_094929~2.jpg" id="img_wakil"><h4 class="edit-target" id="name_wakil">Araya Hestyanjani</h4><small>Wakil Ketua</small></div>
+                <div class="card"><img src="IMG-20260208-WA0009.jpg" id="img_sek1"><h4 class="edit-target" id="name_sek1">Sekar Fatmalatifah</h4><small>Sekretaris 1</small></div>
+                <div class="card"><img src="IMG-20260207-WA0088.jpg" id="img_sek2"><h4 class="edit-target" id="name_sek2">Purnaya Anggita Ajeng</h4><small>Sekretaris 2</small></div>
+                <div class="card"><img src="Screenshot_20251007_141909~2.jpg" id="img_ben1"><h4 class="edit-target" id="name_ben1">Nazwa Safitri</h4><small>Bendahara 1</small></div>
+                <div class="card"><img src="Screenshot_20251007_142007~2.jpg" id="img_ben2"><h4 class="edit-target" id="name_ben2">Maura Virginia Alwer</h4><small>Bendahara 2</small></div>
+            </div>
+        </section>
+
+        <section id="members" class="section">
+            <h3 class="section-title">Daftar Anggota</h3>
+            <div id="memberGrid" class="grid-container"></div>
+            <ul id="memberPagination" class="pagination"></ul>
+        </section>
+
+        <section id="schedule" class="section">
+            <h3 class="section-title">Jadwal Pelajaran</h3>
+            <img src="Screenshot_20251005_203909~2.jpg" id="img_jadwal" style="width:100%; border-radius:24px;">
+        </section>
+
+        <section id="gallery" class="section">
+            <h3 class="section-title">Class Moment</h3>
+            <div id="galleryGrid" class="grid-container"></div>
+            <ul id="galleryPagination" class="pagination"></ul>
+        </section>
+
+        <section class="special-thanks-container">
+            <h3 class="section-title">SPECIAL THANKS TO</h3>
+            <div class="thanks-grid">
+                <div class="thanks-card">
+                    <img src="BeautyPlus-IMAGE-ENHANCER-1770307816691.jpg" id="img_imas">
+                    <h4 class="edit-target" id="name_imas">Bu Imas, S.Pd</h4>
+                    <small>Mantan Wali Kelas X MP 2</small>
+                </div>
+                <div class="thanks-card">
+                    <img src="BeautyPlus-IMAGE-ENHANCER-1770307860705.jpg" id="img_roki">
+                    <h4 class="edit-target" id="name_roki">Bu Rokilah, S.Pd</h4>
+                    <small>Mantan Wali Kelas XI MP 2</small>
+                </div>
+            </div>
+            <p class="thanks-description edit-target" id="thanks_quote">"For being the previous homeroom teacher."</p>
+        </section>
+
+        <footer style="padding: 100px 20px; text-align: center; background: var(--dark); color: white;">
+            <p style="opacity: 0.5;">&copy; 2025 XII MP 2 | Managemen Perkantoran</p>
+            This website was created by Jamilz with lots of love♥️
+        </footer>
+    </div>
+
+    <div id="socialModal" class="modal">
+        <div class="modal-content">
+            <i class="fab fa-instagram" style="font-size: 4rem; color: #c13584; margin-bottom: 20px;"></i>
+            <h3>@mptwonest</h3>
+            <a href="https://www.instagram.com/mptwonest" target="_blank" class="btn-insta">KUNJUNGI INSTAGRAM</a>
+            <button onclick="closeSosmed()" style="margin-top:20px; color:red; cursor:pointer; background:none; border:none;">TUTUP</button>
+        </div>
+    </div>
+<script>
+    const members = [
+        { name: "Aisyah Putri Dewi", skill: "BAKAT SISWA 1", desc: "Klik untuk isi...", img: "Screenshot_20251007_163914~2.jpg" },
+        { name: "Alfi Dafifah Ramadhani", skill: "BAKAT SISWA 2", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Amanda Agustia", skill: "BAKAT SISWA 3", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Amelia Putri Lestari", skill: "BAKAT SISWA 4", desc: "Klik untuk isi...", img: "IMG-20260207-WA0086.jpg" },
+        { name: "Apriell Fernanda Petra", skill: "BAKAT SISWA 5", desc: "Klik untuk isi...", img: "IMG-20251008-WA0102.jpg" },
+        { name: "Araya Hestyanjani", skill: "BAKAT SISWA 6", desc: "Klik untuk isi...", img: "Screenshot_20251006_094929~2.jpg" },
+        { name: "Artita Meydina", skill: "BAKAT SISWA 7", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Bilgis Satya Nugraha", skill: "STARBOY", desc: "Dia sering kali berenang untuk memasuki kepolisian", img: "IMG-20260205-WA0087.jpg" },
+        { name: "Cindi Riani Putri", skill: "BAKAT SISWA 9", desc: "Klik untuk isi...", img: "Screenshot_20251007_163908~2.jpg" },
+        { name: "Dinda Mutiara Aji", skill: "BAKAT SISWA 10", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Dwi Dea Damayanti", skill: "BAKAT SISWA 11", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Ekshal Luiza Asahi", skill: "Bermain Gitar", desc: "Dia terkadang bermain gitar atau alat musik lain dengan bagus", img: "IMG-20251008-WA0074.jpg" },
+        { name: "Fathiya Hasanah", skill: "BAKAT SISWA 13", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Gladys Celia", skill: "BAKAT SISWA 14", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Inaka Akhira Hidayat", skill: "BAKAT SISWA 15", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Indri Lestari", skill: "BAKAT SISWA 16", desc: "Klik untuk isi...", img: "Screenshot_20251009_074706~2.jpg" },
+        { name: "Kayla Putri Maharani", skill: "BAKAT SISWA 17", desc: "Klik untuk isi...", img: "IMG-20260207-WA0085.jpg" },
+        { name: "Keyla Avriliani", skill: "BAKAT SISWA 18", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Lhutfiana Herawati", skill: "BAKAT SISWA 19", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Lusiana Rahmawati", skill: "BAKAT SISWA 20", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Maura Virginia Alwer", skill: "BAKAT SISWA 21", desc: "Klik untuk isi...", img: "Screenshot_20251007_142007~2.jpg" },
+        { name: "Moza Aulia Ramadahani", skill: "BAKAT SISWA 22", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Muhammad Nur Jamil", skill: "Web Developer", desc: "Ketua kelas dan Kreator dibalik situs ini", img: "1768129043443~3.jpg" },
+        { name: "Nabylla Ratu Aprilly", skill: "BAKAT SISWA 24", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Nazwa Safitri", skill: "BAKAT SISWA 25", desc: "Klik untuk isi...", img: "Screenshot_20251007_141909~2.jpg" },
+        { name: "Nur Anninda Rasya", skill: "BAKAT SISWA 26", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Purnaya Anggita Ajeng", skill: "BAKAT SISWA 27", desc: "Klik untuk isi...", img: "IMG-20260207-WA0088.jpg" },
+        { name: "Raisha Malika Syahida", skill: "BAKAT SISWA 28", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Rasti Maharani", skill: "BAKAT SISWA 29", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Risky", skill: "RAJA JOKES", desc: "Dia sering kali membuat jokes bapak bapak, serta punya 25 pacar", img: "Screenshot_20251007_065607~2.jpg" },
+        { name: "Sekar Fatmalatifah", skill: "BAKAT SISWA 31", desc: "Klik untuk isi...", img: "IMG-20260208-WA0009.jpg" },
+        { name: "Sevina Adissa Ramadhani", skill: "BAKAT SISWA 32", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Sheren Aurelia", skill: "BAKAT SISWA 33", desc: "Klik untuk isi...", img: "Screenshot_20251008_221058~2.jpg" },
+        { name: "Siti Muflihah", skill: "BAKAT SISWA 34", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Vicky Ayu Aurora", skill: "BAKAT SISWA 35", desc: "Klik untuk isi...", img: "placeholder.jpg" },
+        { name: "Zamparing Hidayah", skill: "Menyanyi", desc: "Ia sangat sering menyanyi dan membuat temannya bahagia", img: "IMG-20260204-WA0073.jpg" }
+    ];
+
+    const gallery = [
+        "IMG-20251002-WA0096.jpg", "IMG-20250915-WA0217.jpg", "Screenshot_20251006_070427~2.jpg", "Screenshot_20251006_070518~2.jpg", "Screenshot_20251006_070544~2.jpg", "Screenshot_20251007_102942~2.jpg",
+        "Screenshot_20251006_100822~2.jpg", "Screenshot_20251007_104331~2.jpg", "Screenshot_20251007_123059~2 (1).jpg", "Screenshot_20251007_103841~2.jpg", "Screenshot_20251007_123418~2.jpg", "Screenshot_20251007_123405~2.jpg",
+        "Screenshot_20251007_104205~2.jpg", "Screenshot_20251007_104227~2.jpg", "Screenshot_20251007_104032~2.jpg", "Screenshot_20251007_104347~2.jpg", "Screenshot_20251007_104406~2.jpg", "Screenshot_20251007_104117~2.jpg",
+        "Screenshot_20251007_123119~2.jpg", "Screenshot_20251007_123130~2.jpg", "Screenshot_20251007_123150~2.jpg", "Screenshot_20251007_123206~2.jpg", "Screenshot_20251007_123222~2.jpg", "Screenshot_20251007_123238~2.jpg",
+        "Screenshot_20251007_123253~2.jpg", "Screenshot_20251007_123305~2.jpg", "Screenshot_20251007_123317~2.jpg", "Screenshot_20251007_123334~2.jpg", "Screenshot_20251007_104142~2.jpg", "Screenshot_20251007_104133~2.jpg",
+        "IMG-20251007-WA0054.jpg", "IMG-20251006-WA0147.jpg", "IMG-20251006-WA0127.jpg", "IMG-20251006-WA0133.jpg", "IMG-20251006-WA0059.jpg", "IMG-20251006-WA0121.jpg"
+    ];
+
+    const firebaseConfig = { databaseURL: "https://console.firebase.google.com/u/0/project/web-xii-mp2/database/web-xii-mp2-default-rtdb/data/~2F?hl=id-ID" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const passInput = document.getElementById('loginPassword');
+    document.getElementById('togglePass').onclick = () => {
+        const isPass = passInput.type === 'password';
+        passInput.type = isPass ? 'text' : 'password';
+        document.getElementById('togglePass').className = isPass ? 'fas fa-eye-slash toggle-password' : 'fas fa-eye toggle-password';
+    };
+
+    document.getElementById('loginForm').onsubmit = (e) => {
+        e.preventDefault();
+        const user = document.getElementById('loginUsername').value;
+        const pass = passInput.value;
+        if(user === "millz19" && pass === "Jamil2020") {
+            sessionStorage.setItem('role', 'admin');
+            init();
+        } else if(user === "XII MP 2" && pass === "bawahanbumui") {
+            sessionStorage.setItem('role', 'member');
+            init();
+        } else { document.getElementById('loginError').innerText = "❌ Username/Password Salah "}
+    };
+
+    function init() {
+        document.getElementById('fullPageLogin').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        if(sessionStorage.getItem('role') === 'admin') {
+            document.getElementById('adminSaveBtn').style.display = 'block';
+        }
+        loadFromFirebase();
+        renderMembers(1);
+        renderGallery(1);
+        setInterval(updateClock, 1000);
+    }
+
+    // FUNGSI SIMPAN PERMANEN
+    function manualSave() {
+    const btn = document.getElementById('adminSaveBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SEDANG MENGIRIM...';
+    btn.disabled = true;
+
+    const contentData = {};
+    let adaData = false;
+
+    document.querySelectorAll('.edit-target').forEach(el => {
+        // HANYA simpan jika elemen punya ID (Penting!)
+        if(el.id) { 
+            contentData[el.id] = el.innerText.trim();
+            adaData = true;
+        }
+    });
+
+    if(!adaData) {
+        alert("Tidak ada teks yang bisa disimpan (ID elemen tidak ditemukan)");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> SIMPAN PERUBAHAN';
+        return;
+    }
+
+    // Kirim ke Firebase (Harusnya < 1 detik jika Rules sudah True)
+    db.ref('content').update(contentData)
+        .then(() => {
+            btn.style.background = '#2563eb';
+            btn.innerHTML = '<i class="fas fa-check"></i> BERHASIL DISIMPAN!';
+            btn.disabled = false;
+            setTimeout(() => { 
+                btn.style.background = '#10b981'; 
+                btn.innerHTML = '<i class="fas fa-save"></i> SIMPAN PERUBAHAN'; 
+            }, 2000);
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-times"></i> GAGAL SIMPAN';
+            console.error(err);
+            alert("Terjadi kesalahan jaringan atau Firebase ditolak.");
+        });
+}
+
+    // FUNGSI LOAD & SYNC REAL-TIME
+    function loadFromFirebase() {
+        // Mendengarkan perubahan teks secara real-time
+        db.ref('content').on('value', snap => {
+            const data = snap.val();
+            if(!data) return;
+            for(let id in data) {
+                const el = document.getElementById(id);
+                if(el) el.innerText = data[id];
+            }
+        });
+
+        // Mendengarkan perubahan gambar secara real-time
+        db.ref('images').on('value', snap => {
+            const data = snap.val();
+            if(!data) return;
+            for(let id in data) {
+                const el = document.getElementById(id);
+                if(el) el.src = data[id];
+            }
+        });
+    }
+
+    function enableEditing() {
+        if(sessionStorage.getItem('role') !== 'admin') return;
+        document.querySelectorAll('.edit-target').forEach(el => {
+            el.contentEditable = "true";
+            el.classList.add('admin-editable');
+        });
+        document.querySelectorAll('img').forEach(img => {
+            img.classList.add('img-editable');
+            img.onclick = function() { triggerPhotoChange(this); };
+        });
+    }
+
+    let targetImg = null;
+    function triggerPhotoChange(el) {
+        if(sessionStorage.getItem('role') !== 'admin') return;
+        targetImg = el;
+        document.getElementById('imageUploader').click();
+    }
+
+    document.getElementById('imageUploader').onchange = (e) => {
+        const file = e.target.files[0];
+        if (file && targetImg) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const base64 = ev.target.result;
+                targetImg.src = base64;
+                // Langsung simpan ke Firebase saat gambar diupload
+                if(targetImg.id) db.ref('images/' + targetImg.id).set(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    function renderMembers(p) {
+        const start = (p-1)*6;
+        const role = sessionStorage.getItem('role');
+        document.getElementById('memberGrid').innerHTML = members.slice(start, start+6).map((m, i) => {
+            const mid = start+i;
+            return `
+            <div class="card">
+                <img src="${m.img}" id="mem_img_${mid}">
+                <h4 id="mem_name_${mid}" class="${role==='admin'?'edit-target':''}">${m.name}</h4>
+                <small id="mem_skill_${mid}" class="${role==='admin'?'edit-target':''}">${m.skill}</small>
+                <p id="mem_desc_${mid}" class="${role==='admin'?'edit-target':''}">${m.desc}</p>
+            </div>`;
+        }).join('');
+        updatePagination('memberPagination', 6, p, renderMembers);
+        if(role === 'admin') enableEditing();
+    }
+
+    function renderGallery(p) {
+        const start = (p-1)*6;
+        const role = sessionStorage.getItem('role');
+        document.getElementById('galleryGrid').innerHTML = gallery.slice(start, start+6).map((img, i) => `
+            <div style="border-radius:20px; overflow:hidden;">
+                <img src="${img}" id="gal_img_${start+i}" style="width:100%; display:block;" onerror="this.src='https://via.placeholder.com/300'">
+            </div>
+        `).join('');
+        updatePagination('galleryPagination', 6, p, renderGallery);
+        if(role === 'admin') enableEditing();
+    }
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('realTimeClock').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+    }
+
+    function updatePagination(id, total, current, func) {
+        let html = '';
+        for(let i=1; i<=total; i++) html += `<li class="${i===current?'active':''}" onclick="${func.name}(${i})">${i}</li>`;
+        document.getElementById(id).innerHTML = html;
+    }
+
+    function openSosmed() { document.getElementById('socialModal').style.display = 'flex'; }
+    function closeSosmed() { document.getElementById('socialModal').style.display = 'none'; }
+    function logout() { sessionStorage.clear(); location.reload(); }
+    if(sessionStorage.getItem('role')) init();
+</script>
+</body>
+</html>
